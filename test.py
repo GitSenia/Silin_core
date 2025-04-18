@@ -98,11 +98,12 @@ def get_component_counts():
         l = simpledialog.askinteger("Индуктивности", "Сколько индуктивностей (L)?", minvalue=0, maxvalue=99)
         i = simpledialog.askinteger("Источники тока", "Сколько источников тока (I)?", minvalue=0, maxvalue=99)
         v = simpledialog.askinteger("Источники напряжения", "Сколько источников напряжения (V)?", minvalue=0, maxvalue=99)
+        s = simpledialog.askinteger("Ключи", "Сколько ключей (S)?", minvalue=0, maxvalue=99)
 
-        if any(val is None for val in [r, c, l, i, v]):
+        if any(val is None for val in [r, c, l, i, v, s]):
             return None
 
-        return {"R": r, "C": c, "L": l, "I": i, "V": v}
+        return {"R": r, "C": c, "L": l, "I": i, "V": v, "S": s}
 
     except ValueError:
         messagebox.showerror("Ошибка", "Введите корректные значения")
