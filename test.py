@@ -58,11 +58,32 @@ class CircuitMatrix:
                 self.grid_data[row][col] = btn
 
     def toggle_connection(self, row, col):
+        if row == col:
+            return  # запрещаем соединение самого с собой
+
+        comp_from = self.components[row]
+        comp_to = self.components[col]
+
         btn = self.grid_data[row][col]
         current_color = btn.cget("bg")
         new_color = "green" if current_color in ("SystemButtonFace", "lightgray") else "lightgray"
+
+        is_source = comp_from.startswith(("I", "V")) or comp_to.startswith(("I", "V"))
+
+        # Запретить обратные соединения для источников
+        if comp_to.startswith(("I", "V")) and self.connections[col][row] == 1:
+            messagebox.showinfo("Недопустимо",
+                                f"Нельзя соединить {comp_from} → {comp_to}, т.к. уже есть {comp_to} → {comp_from}")
+            return
+
         btn.config(bg=new_color)
         self.connections[row][col] = 1 if new_color == "green" else 0
+
+        # Симметрия только для пассивных компонентов
+        if not comp_from.startswith(("I", "V")) and not comp_to.startswith(("I", "V")):
+            mirror_btn = self.grid_data[col][row]
+            mirror_btn.config(bg=new_color)
+            self.connections[col][row] = self.connections[row][col]
 
     def create_export_button(self):
         export_btn = tk.Button(self.master, text="Экспортировать в JSON", command=self.export_to_json)
@@ -96,14 +117,15 @@ def get_component_counts():
         r = simpledialog.askinteger("Резисторы", "Сколько резисторов (R)?", minvalue=0, maxvalue=99)
         c = simpledialog.askinteger("Конденсаторы", "Сколько конденсаторов (C)?", minvalue=0, maxvalue=99)
         l = simpledialog.askinteger("Индуктивности", "Сколько индуктивностей (L)?", minvalue=0, maxvalue=99)
+        s = simpledialog.askinteger("Ключи", "Сколько ключей (S)?", minvalue=0, maxvalue=99)
         i = simpledialog.askinteger("Источники тока", "Сколько источников тока (I)?", minvalue=0, maxvalue=99)
         v = simpledialog.askinteger("Источники напряжения", "Сколько источников напряжения (V)?", minvalue=0, maxvalue=99)
-        s = simpledialog.askinteger("Ключи", "Сколько ключей (S)?", minvalue=0, maxvalue=99)
 
-        if any(val is None for val in [r, c, l, i, v, s]):
+
+        if any(val is None for val in [r, c, l, s, i, v]):
             return None
 
-        return {"R": r, "C": c, "L": l, "I": i, "V": v, "S": s}
+        return {"R": r, "C": c, "L": l, "S": s, "I": i, "V": v}
 
     except ValueError:
         messagebox.showerror("Ошибка", "Введите корректные значения")
