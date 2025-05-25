@@ -2,25 +2,24 @@ from lcapy import Circuit
 from sympy import pprint, init_printing, symbols
 t = symbols('t', real=True)
 cct = Circuit("""
-SW 0 1 nc 0;up
-C1 1 2;up
-L1 2 3;right
-R1 3 4;right
-R3 4 5;down
-C2 5 6;down
-L2 6 7;left
-R2 7 0;left
-W 3 8;down
-W 8 7;down
-W 5 9;right
-W 6 10;right
-V 9 10;down
-        """)
+V 0 1 12;up
+R1 1 2 1e3; right
+C 2 4 1e-9; down
+R2 4 5 500;down 
+W 5 0;left
+W 2 6;right
+W 5 8;right
+SW 6 7  nc 0; down
+R3 7 8 500;down
 
+; 
+""")
+cct_ivp = cct.convert_IVP(0)
 
 # Получаем ток через R1
-
+vC = cct_ivp.C.v(t)
 
 # Красиво печатаем
-
+pprint(vC, use_unicode=True)
 cct.draw(node_spacing=6)
+
