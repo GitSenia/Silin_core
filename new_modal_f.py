@@ -34,10 +34,15 @@ def assign_components(order):
     sw_set = False
     for i in indices:
         el = elements[i]
-        if el['type'] == 'W' and el['tag'] in ['F0', 'F1']:
+        if el['type'] == 'W' and el['tag'] in ['F0', 'F1','F2']:
             el['type'] = 'SW'
             el['name'] = 'SW'
-            el['value'] = 0 if el['tag'] == 'F0' else 1
+            if el['tag'] == 'F0':
+                el['value'] = 0
+            elif el['tag'] == 'F1':
+                el['value'] = 1
+            elif el['tag'] == 'F2':
+                el['value'] = random.randint(0, 1)
             el['tag'] = None
             sw_set = True
             break
@@ -45,13 +50,16 @@ def assign_components(order):
     if not sw_set:
         raise ValueError("Не найден элемент с tag=F0 или F1 для установки ключа SW")
 
-    # --- Этап 2: проверка уже установленных реактивных компонентов (C или L) с tag=None ---
-    has_C = any(el['type'] == 'C' and el.get('tag') is None for el in elements)
-    has_L = any(el['type'] == 'L' and el.get('tag') is None for el in elements)
+    # --- Этап 2: подсчёт уже установленных реактивных компонентов ---
+    def count_reactives():
+        has_C = any(el['type'] == 'C' for el in elements)
+        has_L = any(el['type'] == 'L' for el in elements)
+        return has_C, has_L
+
+    has_C, has_L = count_reactives()
 
     # --- Этап 3: установка нужных реактивных компонентов ---
     required_reactives = []
-
     if order == 2:
         if not has_C:
             required_reactives.append('C')
@@ -65,7 +73,7 @@ def assign_components(order):
     for comp in required_reactives:
         for i in indices:
             el = elements[i]
-            if el['type'] == 'W' and el.get('tag') == 'L':
+            if el['type'] == 'W' and el.get('tag') in ['L', 'F0', 'F1','F2']:
                 el['type'] = comp
                 el['name'] = comp
                 el['value'] = 0
@@ -81,6 +89,7 @@ def assign_components(order):
 
         tag = el.get('tag')
 
+        # уже учтены C и L выше
         if tag == 'B':
             el['type'] = 'R'
             el['name'] = next_resistor_name()
@@ -90,22 +99,24 @@ def assign_components(order):
         elif tag == 'L':
             if el['name'] in ['C', 'L']:
                 continue
-            if random.random() < 0.5:
-                el['type'] = 'R'
-                el['name'] = next_resistor_name()
-                el['value'] = 0
-                el['tag'] = None
-
-        elif tag is None:
-            if el['type'] in ['C', 'L']:  # уже установлен реактивный
-                continue
             if random.random() < 0.2:
                 el['type'] = 'R'
                 el['name'] = next_resistor_name()
                 el['value'] = 0
                 el['tag'] = None
 
+        elif tag in ['F0', 'F1']:
+            if el['name'] in ['C', 'L']:
+                continue  # сюда мог попасть реактивный, если остался второй F0/F1
+
+
+
+
+
     return elements
+
+
+
 
 
 
@@ -124,7 +135,7 @@ def render_circuit(elements):
         # Строим строку
         line = f"{name} {start} {end}"
         if name == 'SW':
-            line += " nc 1"
+            line += " nc 0"
         if direction:
             if isinstance(value, (int, float)) and value != 0:
                 line += f";{direction}={value}"
@@ -133,7 +144,7 @@ def render_circuit(elements):
         lines.append(line)
     return "\n".join(lines)
 
-assigned = assign_components( order=2)
+assigned = assign_components( order=1)
 t=render_circuit(assigned)
 circuit = Circuit(t)
 print(t)
