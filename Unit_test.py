@@ -1,26 +1,26 @@
-from lcapy import Circuit
-import config
 import random
+from lcapy import *
+import copy
 from sympy import pprint, init_printing, symbols
 t = symbols('t', real=True)
+circuit = [
+    {'type': 'W', 'name': 'W', 'start': '0', 'end': '1', 'value': 0, 'direction': 'up', 'tag': 'F2'},
+    {'type': 'W', 'name': 'W', 'start': '1', 'end': '2', 'value': 0, 'direction': 'up', 'tag': 'B'},
+    {'type': 'W', 'name': 'W', 'start': '2', 'end': '4', 'value': 0, 'direction': 'right', 'tag': 'F2'},
+    {'type': 'W', 'name': 'W', 'start': '4', 'end': '5', 'value': 0, 'direction': 'down', 'tag': 'B'},
+    {'type': 'W', 'name': 'W', 'start': '1', 'end': '5', 'value': 0, 'direction': 'right', 'tag': 'F2'},
+    {'type': 'W', 'name': 'W', 'start': '5', 'end': '6', 'value': 0, 'direction': 'right', 'tag': None},
+    {'type': 'W', 'name': 'W', 'start': '6', 'end': '7', 'value': 0, 'direction': 'up', 'tag': 'B'},
+    {'type': 'W', 'name': 'W', 'start': '6', 'end': '8', 'value': 0, 'direction': 'down', 'tag': None},
+    {'type': 'W', 'name': 'W', 'start': '8', 'end': '9', 'value': 0, 'direction': 'left', 'tag': 'B'},
+    {'type': 'W', 'name': 'W', 'start': '9', 'end': '0', 'value': 0, 'direction': 'left', 'tag': 'F2'},
+    {'type': 'V', 'name': 'V1', 'start': '4', 'end': '7', 'value': 0, 'direction': 'right', 'tag': None},
 
-def get_random_circuit(order):
-    if order == 1:
-        circuits = config.circuit1
-    elif order == 2:
-        circuits = config.circuit2
-    else:
-        raise ValueError("Порядок цепи должен быть 1 или 2")
-
-    if not circuits:
-        raise ValueError(f"В config нет схем для порядка {order}")
-
-    return random.choice(circuits)
-
+]
 
 
 def assign_components(order):
-    elements = get_random_circuit(order)
+    elements = copy.deepcopy(circuit)
     resistor_counter = 1
 
     def next_resistor_name():
@@ -110,11 +110,7 @@ def assign_components(order):
         elif tag in ['F0', 'F1']:
             if el['name'] in ['C', 'L']:
                 continue  # сюда мог попасть реактивный, если остался второй F0/F1
-
-
     return elements
-
-
 
 def render_circuit(elements):
     lines = []
@@ -125,29 +121,42 @@ def render_circuit(elements):
         direction = el.get('direction')
         value = el.get('value')
 
-
         # Строим строку
-        line = f"{name} {start} {end} "
+        line = f"{name} {start} {end}"
         if name == 'SW':
             if value==1:
-                line += " nc 0"
-            else:
                 line += " no 0"
-        if direction:
-            if isinstance(value, (int, float)) and value != 0:
-                line += f";{direction}={value}"
             else:
-                line += f";{direction}"
+                line += " nc 0"
+        if direction:
+            line += f";{direction}"
         lines.append(line)
     return "\n".join(lines)
 
-assigned = assign_components( order=2)
-t=render_circuit(assigned)
-print(t)
-cct=Circuit(t)
-cct.draw(node_spacing=6)
-for el in assigned:
-    print(el)
 
 
 
+if __name__ == "__main__":
+  errors = 0
+  for i in range(100):
+    try:
+      elements = assign_components(order=2)
+      circuit_str = render_circuit(elements)
+      cct = Circuit(circuit_str)
+      cct_ivp = cct.convert_IVP(0)
+      ss = cct_ivp.ss
+
+      print(f"Circuit {i} - valid")
+    except Exception as e:
+      errors += 1
+      print("-----------------------------------")
+      print(f"Circuit {i} - ERROR\n{e}")
+      print("----------Circuit------------------")
+      print(circuit_str)
+      cct = Circuit(circuit_str)
+      cct.draw(node_spacing=6)
+      print("-----------------------------------")
+
+
+
+  print(f"Errors: {errors}")

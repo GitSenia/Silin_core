@@ -1,12 +1,14 @@
 from lcapy import Circuit
 import config
 import random
+from sympy import pprint, init_printing, symbols
+t = symbols('t', real=True)
 
 def get_random_circuit(order):
     if order == 1:
         circuits = config.circuit_test
     elif order == 2:
-        circuits = config.circuit_test
+        circuits = config.circuit2
     else:
         raise ValueError("Порядок цепи должен быть 1 или 2")
 
@@ -37,14 +39,12 @@ def assign_components(order):
         if el['type'] == 'W' and el['tag'] in ['F0', 'F1','F2']:
             el['type'] = 'SW'
             el['name'] = 'SW'
-
             if el['tag'] == 'F0':
                 el['value'] = 0
             elif el['tag'] == 'F1':
                 el['value'] = 1
             elif el['tag'] == 'F2':
                 el['value'] = random.randint(0, 1)
-
             el['tag'] = None
             sw_set = True
             break
@@ -110,25 +110,9 @@ def assign_components(order):
         elif tag in ['F0', 'F1']:
             if el['name'] in ['C', 'L']:
                 continue  # сюда мог попасть реактивный, если остался второй F0/F1
-            if random.random() < 0.3:
-                el['type'] = 'R'
-                el['name'] = next_resistor_name()
-                el['value'] = 0
-                el['tag'] = None
-
-        elif tag is None:
-            if el['type'] in ['C', 'L']:
-                continue
-
 
 
     return elements
-
-
-
-
-
-
 
 
 
@@ -141,10 +125,14 @@ def render_circuit(elements):
         direction = el.get('direction')
         value = el.get('value')
 
+
         # Строим строку
-        line = f"{name} {start} {end}"
+        line = f"{name} {start} {end} "
         if name == 'SW':
-            line += " nc 0"
+            if value=="1":
+                line += " nc 0"
+            else:
+                line += " no 0"
         if direction:
             if isinstance(value, (int, float)) and value != 0:
                 line += f";{direction}={value}"
@@ -153,14 +141,13 @@ def render_circuit(elements):
         lines.append(line)
     return "\n".join(lines)
 
-assigned = assign_components( order=2)
+assigned = assign_components( order=1)
 t=render_circuit(assigned)
-circuit = Circuit(t)
 print(t)
-circuit.draw(node_spacing=6)
+cct=Circuit(t)
+cct.draw(node_spacing=6)
 for el in assigned:
     print(el)
-
 
 
 

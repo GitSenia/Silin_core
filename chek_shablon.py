@@ -2,19 +2,16 @@ from lcapy import Circuit
 from sympy import pprint, init_printing, symbols
 t = symbols('t', real=True)
 cct = Circuit("""
-SW 0 1 nc 0;up
-C1 1 2;up
-L1 2 3;right
-R1 3 4;right
-R3 4 5;down
-C2 5 6;down
-L2 6 7;left
-R2 7 0;left
-W 3 8;down
-W 8 7;down
-W 5 9;right
-W 6 10;right
-V 9 10;down
+
+V1 0 1;up
+R1 1 2;right
+R2 2 6;down
+W 6 3;down
+W 3 4;right
+SW 4 5 nc 0;up
+L 2 5;right
+W 3 0;left
+
         """)
 
 
