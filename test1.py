@@ -1,3 +1,5 @@
+import copy
+
 from lcapy import Circuit
 import config
 import random
@@ -6,9 +8,9 @@ t = symbols('t', real=True)
 
 def get_random_circuit(order):
     if order == 1:
-        circuits = config.circuit_test
+        circuits = copy.deepcopy(config.circuit_test)
     elif order == 2:
-        circuits = config.circuit2
+        circuits = copy.deepcopy(config.circuit_test)
     else:
         raise ValueError("Порядок цепи должен быть 1 или 2")
 
@@ -129,10 +131,10 @@ def render_circuit(elements):
         # Строим строку
         line = f"{name} {start} {end} "
         if name == 'SW':
-            if value=="1":
-                line += " nc 0"
-            else:
+            if value==1:
                 line += " no 0"
+            else:
+                line += " nc 0"
         if direction:
             if isinstance(value, (int, float)) and value != 0:
                 line += f";{direction}={value}"
@@ -146,6 +148,9 @@ t=render_circuit(assigned)
 print(t)
 cct=Circuit(t)
 cct.draw(node_spacing=6)
+cct_ivp = cct.convert_IVP(0)
+ss = cct_ivp.ss
+print(ss)
 for el in assigned:
     print(el)
 
